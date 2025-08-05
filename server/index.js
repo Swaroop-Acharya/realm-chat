@@ -1,6 +1,7 @@
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const express = require("express");
+const { randomBytes } = require("crypto");
 const hostName = "127.0.0.1";
 const port = 8000;
 
@@ -18,29 +19,29 @@ const rooms = new Map();
 io.on("connection", (socket) => {
   console.log("Connected:", socket.id);
 
-  io.on("create-room", ()=>{
+  socket.on("create-room", ()=>{
    const roomCode = randomBytes(3).toString('hex').toUpperCase();
    rooms.set(roomCode,[]);
-   io.join(roomCode);
-   io.emit("room-created",roomCode);
+   socket.join(roomCode);
+   socket.emit("room-created",roomCode);
   });
  
-  io.on("join-room",(roomCode)=>{
+  socket.on("join-room",(roomCode)=>{
     if(!rooms.has(roomCode)){
-        io.emit("error","Room not found");
+      socket.emit("error","Room not found");
       return;
     }
-    io.join(roomCode);
-    io.emit("joined-room", {roomCode, message:rooms.get(roomCode)});
+    socket.join(roomCode);
+    socket.emit("joined-room", {roomCode, message:rooms.get(roomCode)});
   });
 
-  io.on("send-message",({ roomCode, name, text})=>{
+  socket.on("send-message",({ roomCode, name, text})=>{
     const message = {name, text, time: new Date()};
     rooms.get(roomCode).push(message);
-    io.to(roomCode).emit("new-message",message);
+    socket.to(roomCode).emit("new-message",message);
   });
   
-  io.on("disconnect", ()=>{
+  socket.on("disconnect", ()=>{
       console.log("Disconnect:",socket.id);
   });
 
