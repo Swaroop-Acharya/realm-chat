@@ -21,7 +21,7 @@ function App() {
     });
 
     socket.on("new-message", (message) => {
-      console.log(message)
+      console.log(message);
       setMessages((prev) => [...prev, message]);
     });
 
@@ -47,65 +47,68 @@ function App() {
   return (
     <>
       <h1>Weclome to realmChat</h1>
-
-      <input
-        type="text"
-        name="name"
-        placeholder="Name"
-        onChange={(e) => setName(e.target.value)}
-      />
-
-      <button
-        type="button"
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-        onClick={handleCreateRoom}
-      >
-        Create Realm
-      </button>
-
-      <input
-        type="text"
-        name="RoomCode"
-        placeholder="Room Code"
-        onChange={(e) => setRoomCode(e.target.value)}
-      />
-
-      <button
-        type="button"
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-        onClick={handleJoinRoom}
-      >
-        Join Realm
-      </button>
-
-      <h4>Room code: {roomCode}</h4>
-      <div>
+      {!roomCode ? (
         <div>
-          {messages.map((msg,i)=>(
-            <div key={i}>
-              <h3>{msg.name}</h3>
-              <p>{msg.text}</p>
-              <p>{msg.time}</p>
-            </div>
-         ))}
-        </div>
-        <div className="flex">
           <input
             type="text"
-            name="messageText"
-            placeholder="Send message"
-            onChange={(e) => setMsgText(e.target.value)}
+            name="name"
+            placeholder="Name"
+            onChange={(e) => setName(e.target.value)}
           />
 
           <button
             type="button"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-            onClick={handleSendMessage}
+            onClick={handleCreateRoom}
           >
-            Send Message
+            Create Realm
+          </button>
+
+          <input
+            type="text"
+            name="RoomCode"
+            placeholder="Room Code"
+            onChange={(e) => setRoomCode(e.target.value)}
+          />
+
+          <button
+            type="button"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+            onClick={handleJoinRoom}
+          >
+            Join Realm
           </button>
         </div>
-      </div>
+      ) : (
+        <div>
+          <h4>Room code: {roomCode}</h4>
+          <div>
+            {messages.map((msg, i) => (
+              <div key={i}>
+                <h3>{msg.name}</h3>
+                <p>{msg.text}</p>
+                <p>{msg.time}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex">
+            <input
+              type="text"
+              name="messageText"
+              placeholder="Send message"
+              onChange={(e) => setMsgText(e.target.value)}
+            />
+
+            <button
+              type="button"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+              onClick={handleSendMessage}
+            >
+              Send Message
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
