@@ -21,6 +21,7 @@ function App() {
     });
 
     socket.on("new-message", (message) => {
+      console.log(message)
       setMessages((prev) => [...prev, message]);
     });
 
@@ -39,13 +40,14 @@ function App() {
   };
 
   const handleSendMessage = () => {
-    if (!messages.trim()) return;
+    if (!msgText.trim()) return;
     socket.emit("send-message", { roomCode, name, text: msgText.trim() });
     setMsgText("");
   };
   return (
     <>
       <h1>Weclome to realmChat</h1>
+
       <input
         type="text"
         name="name"
@@ -77,6 +79,33 @@ function App() {
       </button>
 
       <h4>Room code: {roomCode}</h4>
+      <div>
+        <div>
+          {messages.map((msg,i)=>(
+            <div key={i}>
+              <h3>{msg.name}</h3>
+              <p>{msg.text}</p>
+              <p>{msg.time}</p>
+            </div>
+         ))}
+        </div>
+        <div className="flex">
+          <input
+            type="text"
+            name="messageText"
+            placeholder="Send message"
+            onChange={(e) => setMsgText(e.target.value)}
+          />
+
+          <button
+            type="button"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+            onClick={handleSendMessage}
+          >
+            Send Message
+          </button>
+        </div>
+      </div>
     </>
   );
 }

@@ -1,3 +1,4 @@
+
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const express = require("express");
@@ -18,7 +19,7 @@ const io = new Server(server, {
 const rooms = new Map();
 io.on("connection", (socket) => {
   console.log("Connected:", socket.id);
-
+  console.log(rooms)
   socket.on("create-room", ()=>{
    const roomCode = randomBytes(3).toString('hex').toUpperCase();
    rooms.set(roomCode,[]);
@@ -37,6 +38,7 @@ io.on("connection", (socket) => {
 
   socket.on("send-message",({ roomCode, name, text})=>{
     const message = {name, text, time: new Date()};
+    console.log(rooms)
     rooms.get(roomCode).push(message);
     socket.to(roomCode).emit("new-message",message);
   });
