@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
@@ -8,7 +7,8 @@ function App() {
   const [roomCode, setRoomCode] = useState("");
   const [name, setName] = useState("");
   const [messages, setMessages] = useState([]);
-  const [msgText, setMsgText] = useState("");
+  const [textMessage, setTextMessage] = useState("");
+  const [usersSize, setUsersSize] = useState(0);
   useEffect(() => {
     socket.on("room-created", (code) => {
       setRoomCode(code);
@@ -20,6 +20,10 @@ function App() {
       setMessages(messages);
     });
 
+    socket.on("error", (err) => alert(err));
+
+    socket.on("user-joined", (userSize) => setUsersSize(userSize));
+
     socket.on("new-message", (message) => {
       console.log(message);
       setMessages((prev) => [...prev, message]);
@@ -28,8 +32,9 @@ function App() {
     return () => {
       socket.off("room-created");
       socket.off("joined-room");
+      socket.off("error");
+      socket.off("user-joined");
       socket.off("new-message");
-
     };
   }, []);
 
@@ -43,9 +48,9 @@ function App() {
   };
 
   const handleSendMessage = () => {
-    if (!msgText.trim()) return;
-    socket.emit("send-message", { roomCode, name, text: msgText.trim() });
-    setMsgText("");
+    if (!textMessage.trim()) return;
+    socket.emit("send-message", { roomCode, message: textMessage.trim(), name });
+   setTextMessage("");
   };
   return (
     <>
@@ -88,9 +93,9 @@ function App() {
           <div>
             {messages.map((msg, i) => (
               <div key={i}>
-                <h3>{msg.name}</h3>
-                <p>{msg.text}</p>
-                <p>{msg.time}</p>
+                <h3>{msg.sender}</h3>
+                <p>{msg.content}</p>
+                <p>{msg.timeStamp}</p>
               </div>
             ))}
           </div>
@@ -99,7 +104,7 @@ function App() {
               type="text"
               name="messageText"
               placeholder="Send message"
-              onChange={(e) => setMsgText(e.target.value)}
+              onChange={(e) => setTextMessage(e.target.value)}
             />
 
             <button

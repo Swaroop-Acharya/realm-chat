@@ -40,7 +40,7 @@ io.on("connection", (socket) => {
     const roomCode = randomBytes(3).toString("hex").toUpperCase();
     rooms.set(roomCode, {
       users: new Set(),
-      messges: [],
+      messages: [],
       lastActive: Date.now(),
     });
     socket.emit("room-created", roomCode);
@@ -51,12 +51,12 @@ io.on("connection", (socket) => {
     const roomCode = parsedData.roomCode;
     const room = room.get(roomCode);
     if (!rooms) {
-      socket.emit("error", "Room not found");
+      socket.emit("error", "Cannot join room, Room not found");
       return;
     }
     socket.join(roomCode);
     room.users.add(socket.id);
-    room.lastActive = Date.now();
+    room.users.lastActive = Date.now();
     socket.emit("joined-room", {
       roomCode,
       message: messages,
@@ -65,22 +65,23 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("user-joined", room.users.size);
   });
 
-  socket.on("send-message", ({ roomCode, messsage, userId, name }) => {
-    const room = room.get(roomCode);
+  socket.on("send-message", ({ roomCode, messsage, name }) => {
+    const room = rooms.get(roomCode);
     if (!rooms) {
-      socket.emit("error", "Room not found");
+      socket.emit("error", "Cannot send message, Room not found");
       return;
     }
     room.lastActive = Date.now();
-    const messsageData = {
+    const messageData = {
       id: randomBytes(4).toString("hex"),
       content: messsage,
-      senderId: userId,
+      // senderId: userId,
       sender: name,
       timeStamp: new Date(),
     };
-    room.messages.put(messageData);
-    io.to("new-message", messsageData);
+    room.messages.push(messageData);
+    console.log(rooms)
+    io.to("new-message", messageData);
   });
 
   socket.on("disconnect", () => {
