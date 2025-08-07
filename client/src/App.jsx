@@ -1,9 +1,9 @@
+
 import { useEffect, useState } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:8000");
-
+const socket = io("http://localhost:8000", { forceNew: true });
 function App() {
   const [roomCode, setRoomCode] = useState("");
   const [name, setName] = useState("");
@@ -26,7 +26,10 @@ function App() {
     });
 
     return () => {
-      socket.off();
+      socket.off("room-created");
+      socket.off("joined-room");
+      socket.off("new-message");
+
     };
   }, []);
 
@@ -46,7 +49,7 @@ function App() {
   };
   return (
     <>
-      <h1>Weclome to realmChat</h1>
+      <h1>Weclome to the happy the realmChat</h1>
       {!roomCode ? (
         <div>
           <input
