@@ -31,6 +31,21 @@ const io = new Server(server, {
  * @property {number} lastActive
  */
 
+/* client to server events
+ *  create-room
+ *  join-room
+ *  send-message
+ *  disconnect
+ *
+ * server to client events
+ *  room-created
+ *  error 
+ *  room-joined
+ *  user-joined
+ *  new-message
+ *  user-left
+ */
+
 const rooms = new Map();
 
 io.on("connection", (socket) => {
@@ -47,41 +62,50 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join-room", (data) => {
-    const parsedData = JSON.parse(data);
-    const roomCode = parsedData.roomCode;
-    const room = room.get(roomCode);
-    if (!rooms) {
+    const roomCode = data.roomCode;
+
+    console.log(`user joined room: ${roomCode}`);
+    const room = rooms.get(roomCode);
+
+    console.log(`Room is: ${room}`)
+    if (!room) {
       socket.emit("error", "Cannot join room, Room not found");
       return;
     }
     socket.join(roomCode);
+    console.log("User socket id:",socket.id);
     room.users.add(socket.id);
-    room.users.lastActive = Date.now();
-    socket.emit("joined-room", {
+    room.lastActive = Date.now();
+
+    console.log(room)
+    socket.emit("room-joined", {
       roomCode,
-      message: messages,
+      messages: room.messages,
     });
 
     io.to(roomCode).emit("user-joined", room.users.size);
   });
 
-  socket.on("send-message", ({ roomCode, messsage, name }) => {
+  socket.on("send-message", ({ roomCode, message, name }) => {
     const room = rooms.get(roomCode);
     if (!rooms) {
       socket.emit("error", "Cannot send message, Room not found");
       return;
     }
+    console.log({roomCode, message,name})
+
+    console.log(Date.now())
     room.lastActive = Date.now();
     const messageData = {
       id: randomBytes(4).toString("hex"),
-      content: messsage,
+      content: message,
       // senderId: userId,
       sender: name,
       timeStamp: new Date(),
     };
     room.messages.push(messageData);
     console.log(rooms)
-    io.to("new-message", messageData);
+    io.to(roomCode).emit("new-message", messageData);
   });
 
   socket.on("disconnect", () => {

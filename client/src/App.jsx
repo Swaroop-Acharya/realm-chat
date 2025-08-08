@@ -2,12 +2,27 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
 
+/* client to server events
+ *  create-room
+ *  join-room
+ *  send-message
+ *  disconnect
+ *
+ * server to client events
+ *  room-created
+ *  error 
+ *  room-joined
+ *  user-joined
+ *  new-message
+ *  user-left
+ */
 const socket = io("http://localhost:8000", { forceNew: true });
 function App() {
   const [roomCode, setRoomCode] = useState("");
   const [name, setName] = useState("");
   const [messages, setMessages] = useState([]);
   const [textMessage, setTextMessage] = useState("");
+  const [error, setError] = useState("");
   const [usersSize, setUsersSize] = useState(0);
   useEffect(() => {
     socket.on("room-created", (code) => {
@@ -15,12 +30,14 @@ function App() {
       console.log(code);
     });
 
-    socket.on("joined-room", ({ code, messages }) => {
-      setRoomCode(code);
+    socket.on("room-joined",({roomCode,messages})=>{
+      setRoomCode(roomCode);
       setMessages(messages);
     });
 
-    socket.on("error", (err) => alert(err));
+    socket.on("error", err => {
+      setError(err);
+    });
 
     socket.on("user-joined", (userSize) => setUsersSize(userSize));
 
@@ -44,18 +61,18 @@ function App() {
 
   const handleJoinRoom = () => {
     if (!roomCode) return alert("Enter room ID");
-    socket.emit("join-room", { roomCode });
+    socket.emit("join-room", { roomCode : roomCode.trim().toUpperCase() });
   };
 
   const handleSendMessage = () => {
     if (!textMessage.trim()) return;
     socket.emit("send-message", { roomCode, message: textMessage.trim(), name });
-   setTextMessage("");
+    setTextMessage("");
   };
   return (
     <>
       <h1>Weclome to the happy the realmChat</h1>
-      {!roomCode ? (
+      <p>{error}</p>
         <div>
           <input
             type="text"
@@ -87,9 +104,9 @@ function App() {
             Join Realm
           </button>
         </div>
-      ) : (
         <div>
           <h4>Room code: {roomCode}</h4>
+          <p><strong>{usersSize}</strong></p>
           <div>
             {messages.map((msg, i) => (
               <div key={i}>
@@ -103,8 +120,7 @@ function App() {
             <input
               type="text"
               name="messageText"
-              placeholder="Send message"
-              onChange={(e) => setTextMessage(e.target.value)}
+              placeholder="Send message" onChange={(e) => setTextMessage(e.target.value)}
             />
 
             <button
@@ -116,7 +132,6 @@ function App() {
             </button>
           </div>
         </div>
-      )}
     </>
   );
 }
