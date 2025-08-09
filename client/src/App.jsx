@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
+import { Button } from "./components/ui/button";
 
 /* client to server events
  *  create-room
@@ -81,13 +82,9 @@ function App() {
             onChange={(e) => setName(e.target.value)}
           />
 
-          <button
-            type="button"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-            onClick={handleCreateRoom}
-          >
-            Create Realm
-          </button>
+          <Button onClick={handleCreateRoom}>Create Realm</Button>
+
+          
 
           <input
             type="text"
