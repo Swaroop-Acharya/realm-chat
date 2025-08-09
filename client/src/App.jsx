@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
 import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+
+import { toast } from "sonner";
 
 /* client to server events
  *  create-room
@@ -11,33 +14,37 @@ import { Button } from "./components/ui/button";
  *
  * server to client events
  *  room-created
- *  error 
+ *  error
  *  room-joined
  *  user-joined
  *  new-message
  *  user-left
  */
-const socket = io("http://localhost:8000", { forceNew: true });
+
+ const VITE_SOCKET_URL = import.meta.env.VITE_LOCAL_SOCKET_URL;
+ const socket = io(VITE_SOCKET_URL,{ forceNew: true });
+
 function App() {
   const [roomCode, setRoomCode] = useState("");
   const [name, setName] = useState("");
   const [messages, setMessages] = useState([]);
   const [textMessage, setTextMessage] = useState("");
-  const [error, setError] = useState("");
   const [usersSize, setUsersSize] = useState(0);
   useEffect(() => {
     socket.on("room-created", (code) => {
       setRoomCode(code);
+      toast.success("Realm created");
       console.log(code);
     });
 
-    socket.on("room-joined",({roomCode,messages})=>{
+    socket.on("room-joined", ({ roomCode, messages }) => {
+      toast.success("Realm joined");
       setRoomCode(roomCode);
       setMessages(messages);
     });
 
-    socket.on("error", err => {
-      setError(err);
+    socket.on("error", (err) => {
+      toast.error(err);
     });
 
     socket.on("user-joined", (userSize) => setUsersSize(userSize));
@@ -62,73 +69,63 @@ function App() {
 
   const handleJoinRoom = () => {
     if (!roomCode) return alert("Enter room ID");
-    socket.emit("join-room", { roomCode : roomCode.trim().toUpperCase() });
+    socket.emit("join-room", { roomCode: roomCode.trim().toUpperCase() });
   };
 
   const handleSendMessage = () => {
     if (!textMessage.trim()) return;
-    socket.emit("send-message", { roomCode, message: textMessage.trim(), name });
+    socket.emit("send-message", {
+      roomCode,
+      message: textMessage.trim(),
+      name,
+    });
     setTextMessage("");
   };
   return (
     <>
       <h1>Weclome to the happy the realmChat</h1>
-      <p>{error}</p>
+      <div>
+        <Input
+          type="text"
+          name="name"
+          placeholder="Name"
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <Button onClick={handleCreateRoom}>Create Realm</Button>
+
+        <Input
+          type="text"
+          name="RoomCode"
+          placeholder="Room Code"
+          onChange={(e) => setRoomCode(e.target.value)}
+        />
+        <Button onClick={handleJoinRoom}>Join Realm</Button>
+      </div>
+      <div>
+        <h4>Room code: {roomCode}</h4>
+        <p>
+          <strong>{usersSize}</strong>
+        </p>
         <div>
-          <input
-            type="text"
-            name="name"
-            placeholder="Name"
-            onChange={(e) => setName(e.target.value)}
-          />
-
-          <Button onClick={handleCreateRoom}>Create Realm</Button>
-
-          
-
-          <input
-            type="text"
-            name="RoomCode"
-            placeholder="Room Code"
-            onChange={(e) => setRoomCode(e.target.value)}
-          />
-
-          <button
-            type="button"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-            onClick={handleJoinRoom}
-          >
-            Join Realm
-          </button>
+          {messages.map((msg, i) => (
+            <div key={i}>
+              <h3>{msg.sender}</h3>
+              <p>{msg.content}</p>
+              <p>{msg.timeStamp}</p>
+            </div>
+          ))}
         </div>
-        <div>
-          <h4>Room code: {roomCode}</h4>
-          <p><strong>{usersSize}</strong></p>
-          <div>
-            {messages.map((msg, i) => (
-              <div key={i}>
-                <h3>{msg.sender}</h3>
-                <p>{msg.content}</p>
-                <p>{msg.timeStamp}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              name="messageText"
-              placeholder="Send message" onChange={(e) => setTextMessage(e.target.value)}
-            />
-
-            <button
-              type="button"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-              onClick={handleSendMessage}
-            >
-              Send Message
-            </button>
-          </div>
+        <div className="flex">
+          <Input
+            type="text"
+            name="messageText"
+            placeholder="Send message"
+            onChange={(e) => setTextMessage(e.target.value)}
+          />
+          <Button onClick={handleSendMessage}>Send Message</Button>
         </div>
+      </div>
     </>
   );
 }
