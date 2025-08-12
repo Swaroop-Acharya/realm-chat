@@ -3,7 +3,15 @@ import "./App.css";
 import { io } from "socket.io-client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
-
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 
 /* client to server events
@@ -21,8 +29,8 @@ import { toast } from "sonner";
  *  user-left
  */
 
- const VITE_SOCKET_URL = import.meta.env.VITE_LOCAL_SOCKET_URL;
- const socket = io(VITE_SOCKET_URL,{ forceNew: true });
+const VITE_SOCKET_URL = import.meta.env.VITE_LOCAL_SOCKET_URL;
+const socket = io(VITE_SOCKET_URL);
 
 function App() {
   const [roomCode, setRoomCode] = useState("");
@@ -83,48 +91,63 @@ function App() {
   };
   return (
     <>
-      <h1>Weclome to the happy the realmChat</h1>
-      <div>
-        <Input
-          type="text"
-          name="name"
-          placeholder="Name"
-          onChange={(e) => setName(e.target.value)}
-        />
-
-        <Button onClick={handleCreateRoom}>Create Realm</Button>
-
-        <Input
-          type="text"
-          name="RoomCode"
-          placeholder="Room Code"
-          onChange={(e) => setRoomCode(e.target.value)}
-        />
-        <Button onClick={handleJoinRoom}>Join Realm</Button>
-      </div>
-      <div>
-        <h4>Room code: {roomCode}</h4>
-        <p>
-          <strong>{usersSize}</strong>
-        </p>
-        <div>
-          {messages.map((msg, i) => (
-            <div key={i}>
-              <h3>{msg.sender}</h3>
-              <p>{msg.content}</p>
-              <p>{msg.timeStamp}</p>
+      <div className="container mx-auto max-w-2xl p-4 h-screen flex items-center justify-center">
+        <Card className="w-full">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl flex items-center gap-2 font-bold">
+              Realm Chat
+            </CardTitle>
+            <CardDescription>Chat with friends</CardDescription>
+          </CardHeader>
+          <CardContent> 
+            <Button className="w-full text-lg py-6" onClick={handleCreateRoom}>
+              Create Realm
+            </Button>
+            <div className="flex gap-10">
+              <Input
+                type="text"
+                name="name"
+                placeholder="Name"
+                className="text-lg py-5"
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
-          ))}
-        </div>
-        <div className="flex">
-          <Input
-            type="text"
-            name="messageText"
-            placeholder="Send message"
-            onChange={(e) => setTextMessage(e.target.value)}
-          />
-          <Button onClick={handleSendMessage}>Send Message</Button>
-        </div>
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                name="RoomCode"
+                placeholder="Room Code"
+                className="text-lg py-5"
+                onChange={(e) => setRoomCode(e.target.value)}
+              />
+              <Button onClick={handleJoinRoom}>Join Realm</Button>
+            </div>
+            <div>
+              <h4>Room code: {roomCode}</h4>
+              <p>
+                <strong>{usersSize}</strong>
+              </p>
+              <div>
+                {messages.map((msg, i) => (
+                  <div key={i}>
+                    <h3>{msg.sender}</h3>
+                    <p>{msg.content}</p>
+                    <p>{msg.timeStamp}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex">
+                <Input
+                  type="text"
+                  name="messageText"
+                  placeholder="Send message"
+                  onChange={(e) => setTextMessage(e.target.value)}
+                />
+                <Button onClick={handleSendMessage}>Send Message</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
