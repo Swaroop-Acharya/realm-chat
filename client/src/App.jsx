@@ -38,6 +38,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [textMessage, setTextMessage] = useState("");
   const [usersSize, setUsersSize] = useState(0);
+  const [connected, setConnected] = useState(false);
   useEffect(() => {
     socket.on("room-created", (code) => {
       setRoomCode(code);
@@ -46,9 +47,11 @@ function App() {
     });
 
     socket.on("room-joined", ({ roomCode, messages }) => {
-      toast.success("Realm joined");
       setRoomCode(roomCode);
       setMessages(messages);
+      setConnected(true);
+      setRoomCode("");
+      toast.success("Realm joined");
     });
 
     socket.on("error", (err) => {
@@ -80,7 +83,8 @@ function App() {
     socket.emit("join-room", { roomCode: roomCode.trim().toUpperCase() });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (e) => {
+    e.preventDefault();
     if (!textMessage.trim()) return;
     socket.emit("send-message", {
       roomCode,
@@ -99,53 +103,72 @@ function App() {
             </CardTitle>
             <CardDescription>Chat with friends</CardDescription>
           </CardHeader>
-          <CardContent> 
-            <Button className="w-full text-lg py-6" onClick={handleCreateRoom}>
-              Create Realm
-            </Button>
-            <div className="flex gap-10">
-              <Input
-                type="text"
-                name="name"
-                placeholder="Name"
-                className="text-lg py-5"
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                name="RoomCode"
-                placeholder="Room Code"
-                className="text-lg py-5"
-                onChange={(e) => setRoomCode(e.target.value)}
-              />
-              <Button onClick={handleJoinRoom}>Join Realm</Button>
-            </div>
-            <div>
-              <h4>Room code: {roomCode}</h4>
-              <p>
-                <strong>{usersSize}</strong>
-              </p>
-              <div>
-                {messages.map((msg, i) => (
-                  <div key={i}>
-                    <h3>{msg.sender}</h3>
-                    <p>{msg.content}</p>
-                    <p>{msg.timeStamp}</p>
-                  </div>
-                ))}
+          <CardContent>
+            {!connected ? (
+              <div className="space-y-4">
+                <Button
+                  size="lg"
+                  className="w-full text-lg py-6"
+                  onClick={handleCreateRoom}
+                >
+                  Create Realm
+                </Button>
+                <div className="flex  gap-2">
+                  <Input
+                    type="text"
+                    name="name"
+                    value={name}
+                    placeholder="Name"
+                    className="text-lg py-5"
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={roomCode}
+                    name="RoomCode"
+                    placeholder="Room Code"
+                    className="text-lg py-5"
+                    onChange={(e) => setRoomCode(e.target.value)}
+                  />
+                  <Button size="lg" className="px-8" onClick={handleJoinRoom}>
+                    Join Realm
+                  </Button>
+                </div>
               </div>
-              <div className="flex">
-                <Input
-                  type="text"
-                  name="messageText"
-                  placeholder="Send message"
-                  onChange={(e) => setTextMessage(e.target.value)}
-                />
-                <Button onClick={handleSendMessage}>Send Message</Button>
+            ) : (
+              <div className="max-w-3xl mx-auto space-y-7">
+                <div>
+                  <h4>Room code: {roomCode}</h4>
+                  <p>
+                    <strong>{usersSize}</strong>
+                  </p>
+                </div>
+                <div className="h-[430px] overflow-y-auto border rounded-lg p-4 space-y-2">
+                  {messages.map((msg, i) => (
+                    <div key={i}>
+                      <h3>{msg.sender}</h3>
+                      <p>{msg.content}</p>
+                      <p>{msg.timeStamp}</p>
+                    </div>
+                  ))}
+                </div>
+                <form onSubmit={handleSendMessage} className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={textMessage}
+                    name="messageText"
+                    className="text-lg py-5"
+                    placeholder="Send message"
+                    onChange={(e) => setTextMessage(e.target.value)}
+                  />
+                  <Button type="submit" size="lg" className="px-8">
+                    Send Message
+                  </Button>
+                </form>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
