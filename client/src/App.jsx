@@ -189,11 +189,22 @@ function App() {
               </div>
             ) : (
               <div className="max-w-3xl mx-auto space-y-7">
-                <div className="flex">
-                  <h4>Room code: {roomCode}</h4>
-                  <p>
-                    <strong>{usersSize}</strong>
-                  </p>
+                <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Room Code:{" "}
+                      <span className="font-mono font-bold">{roomCode}</span>
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard(roomCode)}
+                      className="h-6 w-6"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <span>Users: {usersSize}</span>
                 </div>
                 <div className="h-[430px] overflow-y-auto border rounded-lg p-4 space-y-2">
                   {messages.map((msg, i) => (
