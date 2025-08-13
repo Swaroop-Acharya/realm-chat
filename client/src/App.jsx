@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Copy, Loading2 } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 
 /* client to server events
  *  create-room
@@ -189,7 +189,7 @@ function App() {
               </div>
             ) : (
               <div className="max-w-3xl mx-auto space-y-7">
-                <div>
+                <div className="flex">
                   <h4>Room code: {roomCode}</h4>
                   <p>
                     <strong>{usersSize}</strong>
