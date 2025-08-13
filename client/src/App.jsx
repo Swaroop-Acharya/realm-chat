@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Copy, Loading2 } from "lucide-react";
 
 /* client to server events
  *  create-room
@@ -29,9 +30,9 @@ import { toast } from "sonner";
  *  user-left
  */
 
-const LOCALHOST_SOCKET_URL= import.meta.env.VITE_LOCAL_SOCKET_URL;
-
-const socket = io("https://realm-chat-backend.onrender.com/");
+const LOCALHOST_SOCKET_URL = import.meta.env.VITE_LOCAL_SOCKET_URL;
+const PROD_SOCKET_URL = "https://realm-chat-backend.onrender.com";
+const socket = io(import.meta.env.DEV ? LOCALHOST_SOCKET_URL : PROD_SOCKET_URL);
 
 function App() {
   const [roomCode, setRoomCode] = useState("");
@@ -40,11 +41,12 @@ function App() {
   const [textMessage, setTextMessage] = useState("");
   const [usersSize, setUsersSize] = useState(0);
   const [connected, setConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     socket.on("room-created", (code) => {
+      setIsLoading(false);
       setRoomCode(code);
       toast.success("Realm created");
-      console.log(code);
     });
 
     socket.on("room-joined", ({ roomCode, messages }) => {
@@ -55,6 +57,7 @@ function App() {
     });
 
     socket.on("error", (err) => {
+      setIsLoading(false);
       toast.error(err);
     });
 
@@ -75,24 +78,35 @@ function App() {
   }, []);
 
   const handleCreateRoom = () => {
+    setIsLoading(true);
     socket.emit("create-room");
   };
 
   const handleJoinRoom = () => {
     if (!roomCode) return alert("Enter room ID");
+    setIsLoading(true);
     socket.emit("join-room", { roomCode: roomCode.trim().toUpperCase() });
   };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!textMessage.trim()) return;
-    console.log(roomCode,textMessage,name);
+    console.log(roomCode, textMessage, name);
     socket.emit("send-message", {
       roomCode,
       message: textMessage.trim(),
       name,
     });
     setTextMessage("");
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(roomCode);
+      toast.success("Realm code copied to clipboard");
+    } catch (err) {
+      toast.error("Failed to copy realm code" + err);
+    }
   };
   return (
     <>
@@ -111,8 +125,16 @@ function App() {
                   size="lg"
                   className="w-full text-lg py-6"
                   onClick={handleCreateRoom}
+                  disabled={isLoading}
                 >
-                  Create Realm
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Realm...
+                    </>
+                  ) : (
+                    "Create New Realm"
+                  )}
                 </Button>
                 <div className="flex  gap-2">
                   <Input
@@ -127,16 +149,43 @@ function App() {
                 <div className="flex gap-2">
                   <Input
                     type="text"
-                    value={roomCode}
                     name="RoomCode"
                     placeholder="Room Code"
                     className="text-lg py-5"
                     onChange={(e) => setRoomCode(e.target.value)}
                   />
                   <Button size="lg" className="px-8" onClick={handleJoinRoom}>
-                    Join Realm
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Joining Realm...
+                      </>
+                    ) : (
+                      "Join Realm"
+                    )}
                   </Button>
                 </div>
+
+                {roomCode && (
+                  <div className="text-center p-6 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Share this code with your friend
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="font-mono text-2xl font-bold">
+                        {roomCode}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(roomCode)}
+                        className="h-8 w-8"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="max-w-3xl mx-auto space-y-7">
