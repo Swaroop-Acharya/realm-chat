@@ -6,15 +6,33 @@ const { randomBytes } = require("crypto");
 const PORT = process.env.PORT || 4000;
 
 const app = express();
+
+// Add CORS middleware for Express
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://realmchat.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origins: [
       "http://localhost:5173",
       "http://localhost:5174",
+      "https://realmchat.vercel.app",
       "https://realmchat.vercel.app/",
     ],
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
 });
 
