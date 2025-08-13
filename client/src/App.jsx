@@ -29,6 +29,8 @@ import { toast } from "sonner";
  *  user-left
  */
 
+const LOCALHOST_SOCKET_URL= import.meta.env.VITE_LOCAL_SOCKET_URL;
+
 const socket = io("https://realm-chat-backend.onrender.com/");
 
 function App() {
@@ -49,7 +51,6 @@ function App() {
       setRoomCode(roomCode);
       setMessages(messages);
       setConnected(true);
-      setRoomCode("");
       toast.success("Realm joined");
     });
 
