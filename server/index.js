@@ -109,7 +109,7 @@ io.on("connection", (socket) => {
 
   socket.on("send-message", ({ roomCode, message, name }) => {
     const room = rooms.get(roomCode);
-    if (!rooms) {
+    if (!room) {
       socket.emit("error", "Cannot send message, Room not found");
       return;
     }
@@ -147,7 +147,7 @@ io.on("connection", (socket) => {
 setInterval(() => {
   const curTime = Date.now();
   rooms.forEach((room, roomCode) => {
-    if (room.user.size == 0 || curTime - room.user.lastActive > 36000000) {
+    if (room.users.size == 0 || curTime - room.lastActive > 36000000) {
       console.log(`Deleting inactive room: ${roomCode}`);
       rooms.delete(roomCode);
     }
