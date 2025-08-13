@@ -1,16 +1,19 @@
+
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const express = require("express");
 const { randomBytes } = require("crypto");
-const { timeStamp } = require("node:console");
-const hostName = "127.0.0.1";
-const port = 8000;
+const PORT = process.env.PORT || 4000;
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origins: ["http://localhost:5173", "http://localhost:5174"],
+    origins: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://realmchat.vercel.app/",
+    ],
     methods: ["GET", "POST"],
   },
 });
@@ -39,7 +42,7 @@ const io = new Server(server, {
  *
  * server to client events
  *  room-created
- *  error 
+ *  error
  *  room-joined
  *  user-joined
  *  new-message
@@ -67,17 +70,17 @@ io.on("connection", (socket) => {
     console.log(`user joined room: ${roomCode}`);
     const room = rooms.get(roomCode);
 
-    console.log(`Room is: ${room}`)
+    console.log(`Room is: ${room}`);
     if (!room) {
       socket.emit("error", "Cannot join room, Room not found");
       return;
     }
     socket.join(roomCode);
-    console.log("User socket id:",socket.id);
+    console.log("User socket id:", socket.id);
     room.users.add(socket.id);
     room.lastActive = Date.now();
 
-    console.log(room)
+    console.log(room);
     socket.emit("room-joined", {
       roomCode,
       messages: room.messages,
@@ -92,9 +95,9 @@ io.on("connection", (socket) => {
       socket.emit("error", "Cannot send message, Room not found");
       return;
     }
-    console.log({roomCode, message,name})
+    console.log({ roomCode, message, name });
 
-    console.log(Date.now())
+    console.log(Date.now());
     room.lastActive = Date.now();
     const messageData = {
       id: randomBytes(4).toString("hex"),
@@ -104,7 +107,7 @@ io.on("connection", (socket) => {
       timeStamp: new Date(),
     };
     room.messages.push(messageData);
-    console.log(rooms)
+    console.log(rooms);
     io.to(roomCode).emit("new-message", messageData);
   });
 
@@ -137,6 +140,6 @@ app.get("/", (req, res) => {
   res.send("Ping pon");
 });
 
-server.listen(port, hostName, () => {
-  console.log(`Server is up and running at http://${hostName}:${port}/`);
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
