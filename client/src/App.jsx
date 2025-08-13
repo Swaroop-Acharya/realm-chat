@@ -13,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Analytics } from "@vercel/analytics/react";
 
 /* client to server events
  *  create-room
@@ -172,7 +171,6 @@ function App() {
             )}
           </CardContent>
         </Card>
-        </Analytics>
       </div>
     </>
   );
