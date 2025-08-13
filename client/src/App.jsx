@@ -85,6 +85,7 @@ function App() {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!textMessage.trim()) return;
+    console.log(roomCode,textMessage,name);
     socket.emit("send-message", {
       roomCode,
       message: textMessage.trim(),
