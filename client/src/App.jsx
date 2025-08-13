@@ -29,10 +29,7 @@ import { toast } from "sonner";
  *  user-left
  */
 
-const VITE_SOCKET_URL = import.meta.env.VITE_LOCAL_SOCKET_URL;
-const socket = io(
-  VITE_SOCKET_URL || "https://realm-chat-backend.onrender.com/",
-);
+const socket = io("https://realm-chat-backend.onrender.com/");
 
 function App() {
   const [roomCode, setRoomCode] = useState("");
