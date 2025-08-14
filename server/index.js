@@ -3,7 +3,7 @@ const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const express = require("express");
 const { randomBytes } = require("crypto");
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
 const app = express();
 

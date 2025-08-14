@@ -1,1 +1,12 @@
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
 
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 3px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}

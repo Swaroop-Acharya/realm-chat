@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
 import { Button } from "./components/ui/button";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Copy, Loader2 } from "lucide-react";
-
+import MessageBubble from "./components/MessageBubble";
 /* client to server events
  *  create-room
  *  join-room
@@ -42,6 +42,8 @@ function App() {
   const [usersSize, setUsersSize] = useState(0);
   const [connected, setConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const currentMessgeRef = useRef(null);
+
   useEffect(() => {
     socket.on("room-created", (code) => {
       setIsLoading(false);
@@ -77,13 +79,17 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    currentMessgeRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleCreateRoom = () => {
     setIsLoading(true);
     socket.emit("create-room");
   };
 
   const handleJoinRoom = () => {
-    if (!roomCode) return alert("Enter room ID");
+    if (!roomCode) return toast.error("Enter room ID");
     setIsLoading(true);
     socket.emit("join-room", { roomCode: roomCode.trim().toUpperCase() });
   };
@@ -206,14 +212,17 @@ function App() {
                   </div>
                   <span>Users: {usersSize}</span>
                 </div>
-                <div className="h-[430px] overflow-y-auto border rounded-lg p-4 space-y-2">
+                <div className="h-[430px] overflow-y-auto border rounded-lg p-4 space-y-2 chat-scrollbar">
                   {messages.map((msg, i) => (
-                    <div key={i}>
-                      <h3>{msg.sender}</h3>
-                      <p>{msg.content}</p>
-                      <p>{msg.timeStamp}</p>
-                    </div>
+                    <MessageBubble
+                      key={i}
+                      sender={msg.sender}
+                      content={msg.content}
+                      timeStamp={msg.timeStamp}
+                      isOwn={msg.sender === name}
+                    />
                   ))}
+                  <div ref={currentMessgeRef}></div>
                 </div>
                 <form onSubmit={handleSendMessage} className="flex gap-2">
                   <Input
