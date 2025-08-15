@@ -1,2 +1,1 @@
-# realm-chat
-Real time chat app built using websockets
+Realm chat is a WebSocket-based chat application.
