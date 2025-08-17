@@ -42,6 +42,7 @@ function App() {
   const [usersSize, setUsersSize] = useState(0);
   const [connected, setConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [inputRoomCode,setInputRoomCode] = useState("");
   const currentMessgeRef = useRef(null);
 
   useEffect(() => {
@@ -89,9 +90,10 @@ function App() {
   };
 
   const handleJoinRoom = () => {
-    if (!roomCode) return toast.error("Enter room ID");
+    if (!inputRoomCode) return toast.error("Enter room ID");
+    if(!name) return toast.error("Please enter name");
     setIsLoading(true);
-    socket.emit("join-room", { roomCode: roomCode.trim().toUpperCase() });
+    socket.emit("join-room", { roomCode: inputRoomCode.trim().toUpperCase() });
   };
 
   const handleSendMessage = (e) => {
@@ -156,9 +158,10 @@ function App() {
                   <Input
                     type="text"
                     name="RoomCode"
+                    value={inputRoomCode}
                     placeholder="Room Code"
                     className="text-lg py-5"
-                    onChange={(e) => setRoomCode(e.target.value)}
+                    onChange={(e) => setInputRoomCode(e.target.value)}
                   />
                   <Button size="lg" className="px-8" onClick={handleJoinRoom}>
                     {isLoading ? (
