@@ -42,18 +42,19 @@ function App() {
   const [textMessage, setTextMessage] = useState("");
   const [usersSize, setUsersSize] = useState(0);
   const [connected, setConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [inputRealmCode,setInputRealmCode] = useState("");
+  const [isCreated, setIsCreated] = useState(false);
+  const [isJoined, setIsJoined] = useState(false);
+  const [inputRealmCode, setInputRealmCode] = useState("");
   const currentMessgeRef = useRef(null);
 
   useEffect(() => {
     socket.on("realm-created", (code) => {
-      setIsLoading(false);
+      setIsCreated(false);
       setRealmCode(code);
       toast.success("Realm created");
     });
 
-    socket.on("realm-joined", ({ realmCode , messages }) => {
+    socket.on("realm-joined", ({ realmCode, messages }) => {
       setRealmCode(realmCode);
       setMessages(messages);
       setConnected(true);
@@ -61,7 +62,8 @@ function App() {
     });
 
     socket.on("error", (err) => {
-      setIsLoading(false);
+      setIsCreated(false);
+      setIsJoined(false);
       toast.error(err);
     });
 
@@ -86,15 +88,17 @@ function App() {
   }, [messages]);
 
   const handleCreateRealm = () => {
-    setIsLoading(true);
+    setIsCreated(true);
     socket.emit("create-realm");
   };
 
   const handleJoinRealm = () => {
     if (!inputRealmCode) return toast.error("Enter realm code");
-    if(!name) return toast.error("Please enter name");
-    setIsLoading(true);
-    socket.emit("join-realm", { realmCode:inputRealmCode.trim().toUpperCase() });
+    if (!name) return toast.error("Please enter name");
+    setIsJoined(true);
+    socket.emit("join-realm", {
+      realmCode: inputRealmCode.trim().toUpperCase(),
+    });
   };
 
   const handleSendMessage = (e) => {
@@ -134,9 +138,9 @@ function App() {
                   size="lg"
                   className="w-full text-lg py-6"
                   onClick={handleCreateRealm}
-                  disabled={isLoading}
+                  disabled={isCreated}
                 >
-                  {isLoading ? (
+                  {isCreated ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating Realm...
@@ -164,8 +168,13 @@ function App() {
                     className="text-lg py-5"
                     onChange={(e) => setInputRealmCode(e.target.value)}
                   />
-                  <Button size="lg" className="px-8" onClick={handleJoinRealm}>
-                    {isLoading ? (
+                  <Button
+                    size="lg"
+                    disabled={isJoined}
+                    className="px-8"
+                    onClick={handleJoinRealm}
+                  >
+                    {isJoined ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Joining Realm...
