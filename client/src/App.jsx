@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Copy, Loader2 } from "lucide-react";
+import { Copy, Loader2, Send } from "lucide-react";
 import MessageBubble from "./components/MessageBubble";
 
 /* client to server events
@@ -123,20 +123,20 @@ function App() {
   };
   return (
     <>
-      <div className="container mx-auto max-w-2xl p-4 h-screen flex items-center justify-center">
+      <div className="container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex items-center justify-center">
         <Card className="w-full">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl flex items-center gap-2 font-bold">
+            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2 font-bold">
               Realm Chat
             </CardTitle>
-            <CardDescription>Chat with friends</CardDescription>
+            <CardDescription className="text-sm sm:text-base">Chat with friends</CardDescription>
           </CardHeader>
           <CardContent>
             {!connected ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <Button
                   size="lg"
-                  className="w-full text-lg py-6"
+                  className="w-full text-base sm:text-lg py-4 sm:py-6"
                   onClick={handleCreateRealm}
                   disabled={isCreated}
                 >
@@ -149,34 +149,34 @@ function App() {
                     "Create New Realm"
                   )}
                 </Button>
-                <div className="flex  gap-2">
+                <div className="flex gap-2">
                   <Input
                     type="text"
                     name="name"
                     value={name}
                     placeholder="Name"
-                    className="text-lg py-5"
+                    className="text-base sm:text-lg py-3 sm:py-5"
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     type="text"
                     name="RealmCode"
                     value={inputRealmCode}
                     placeholder="Enter Realm Code"
-                    className="text-lg py-5"
+                    className="text-base sm:text-lg py-3 sm:py-5"
                     onChange={(e) => setInputRealmCode(e.target.value)}
                   />
                   <Button
                     size="lg"
                     disabled={isJoined}
-                    className="px-8"
+                    className="px-4 sm:px-8 py-3 sm:py-4"
                     onClick={handleJoinRealm}
                   >
                     {isJoined ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                         Joining Realm...
                       </>
                     ) : (
@@ -186,29 +186,29 @@ function App() {
                 </div>
 
                 {realmCode && (
-                  <div className="text-center p-6 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">
+                  <div className="text-center p-4 sm:p-6 bg-muted rounded-lg">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                       Share this code with your friend
                     </p>
                     <div className="flex items-center justify-center gap-2">
-                      <span className="font-mono text-2xl font-bold">
+                      <span className="font-mono text-xl sm:text-2xl font-bold">
                         {realmCode}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => copyToClipboard(realmCode)}
-                        className="h-8 w-8"
+                        className="h-6 w-6 sm:h-8 sm:w-8"
                       >
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto space-y-7">
-                <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+              <div className="max-w-3xl mx-auto space-y-4 sm:space-y-7">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm text-muted-foreground bg-muted p-2 sm:p-3 rounded-lg gap-2 sm:gap-0">
                   <div className="flex items-center gap-2">
                     <span>
                       Realm Code:{" "}
@@ -218,14 +218,14 @@ function App() {
                       variant="ghost"
                       size="icon"
                       onClick={() => copyToClipboard(realmCode)}
-                      className="h-6 w-6"
+                      className="h-5 w-5 sm:h-6 sm:w-6"
                     >
-                      <Copy className="h-3 w-3" />
+                      <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                     </Button>
                   </div>
                   <span>Users: {usersSize}</span>
                 </div>
-                <div className="h-[430px] overflow-y-auto border rounded-lg p-4 space-y-2 chat-scrollbar">
+                <div className="h-[300px] sm:h-[430px] overflow-y-auto border rounded-lg p-2 sm:p-4 space-y-2 chat-scrollbar">
                   {messages.map((msg, i) => (
                     <MessageBubble
                       key={i}
@@ -242,12 +242,13 @@ function App() {
                     type="text"
                     value={textMessage}
                     name="messageText"
-                    className="text-lg py-5"
+                    className="text-base sm:text-lg py-3 sm:py-5"
                     placeholder="Send message"
                     onChange={(e) => setTextMessage(e.target.value)}
                   />
-                  <Button type="submit" size="lg" className="px-8">
-                    Send Message
+                  <Button type="submit" size="lg" className="px-4 sm:px-8 py-3 sm:py-4">
+                    <Send className="h-4 w-4 sm:hidden" />
+                    <span className="hidden sm:inline">Send Message</span>
                   </Button>
                 </form>
               </div>
