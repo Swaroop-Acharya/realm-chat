@@ -247,8 +247,7 @@ function App() {
                     onChange={(e) => setTextMessage(e.target.value)}
                   />
                   <Button type="submit" size="lg" className="px-4 sm:px-8 py-3 sm:py-4">
-                    <Send className="h-4 w-4 sm:hidden" />
-                    <span className="hidden sm:inline">Send Message</span>
+                    <Send className="h-4 w-4" />
                   </Button>
                 </form>
               </div>
