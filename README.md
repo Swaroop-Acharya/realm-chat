@@ -67,9 +67,4 @@ Here’s how you can help:
 
 ---
 
-## 📜 License
-This project is licensed under the **MIT License** – you are free to use, modify, and distribute it.  
-
----
-
 ⚡ Build your own **realms** and chat the way you want!
