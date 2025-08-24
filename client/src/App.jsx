@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Copy, Loader2, Send } from "lucide-react";
+import { encryptText, decryptText, setSecretKey } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
+import { enc } from "crypto-js";
 
 /* client to server events
  *  create-realm
@@ -47,6 +49,12 @@ function App() {
   const [inputRealmCode, setInputRealmCode] = useState("");
   const currentMessgeRef = useRef(null);
 
+  // useEffect(() => {
+  //   if (realmCode) {
+  //     setSecretKey(realmCode);
+  //   }
+  // }, [realmCode]);
+
   useEffect(() => {
     socket.on("realm-created", (code) => {
       setIsCreated(false);
@@ -56,7 +64,11 @@ function App() {
 
     socket.on("realm-joined", ({ realmCode, messages }) => {
       setRealmCode(realmCode);
-      setMessages(messages);
+      const decryptedMessages = messages.map((msg) => ({
+        ...msg,
+        content: decryptText(msg.content),
+      }));
+      setMessages(decryptedMessages);
       setConnected(true);
       toast.success("Realm joined");
     });
@@ -70,7 +82,7 @@ function App() {
     socket.on("user-joined", (userSize) => setUsersSize(userSize));
 
     socket.on("new-message", (message) => {
-      console.log(message);
+      message.content = decryptText(message.content);
       setMessages((prev) => [...prev, message]);
     });
 
@@ -104,10 +116,9 @@ function App() {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!textMessage.trim()) return;
-    console.log(realmCode, textMessage, name);
     socket.emit("send-message", {
       realmCode,
-      message: textMessage.trim(),
+      message: encryptText(textMessage.trim()),
       name,
     });
     setTextMessage("");
