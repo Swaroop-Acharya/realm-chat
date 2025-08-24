@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { Copy, Loader2, Send } from "lucide-react";
 import { encryptText, decryptText, setSecretKey } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
-import { enc } from "crypto-js";
 
 /* client to server events
  *  create-realm
@@ -48,12 +47,6 @@ function App() {
   const [isJoined, setIsJoined] = useState(false);
   const [inputRealmCode, setInputRealmCode] = useState("");
   const currentMessgeRef = useRef(null);
-
-  // useEffect(() => {
-  //   if (realmCode) {
-  //     setSecretKey(realmCode);
-  //   }
-  // }, [realmCode]);
 
   useEffect(() => {
     socket.on("realm-created", (code) => {
