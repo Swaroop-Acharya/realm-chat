@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Copy, Loader2, Send } from "lucide-react";
-import { encryptText, decryptText, setSecretKey } from "./Encrypt";
+import { encrypt, decrypt } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
 
 /* client to server events
@@ -47,6 +47,12 @@ function App() {
   const [isJoined, setIsJoined] = useState(false);
   const [inputRealmCode, setInputRealmCode] = useState("");
   const currentMessgeRef = useRef(null);
+  const realmCodeRef = useRef("");
+
+  // Update ref whenever state changes
+  useEffect(() => {
+    realmCodeRef.current = realmCode;
+  }, [realmCode]);
 
   useEffect(() => {
     socket.on("realm-created", (code) => {
@@ -55,12 +61,14 @@ function App() {
       toast.success("Realm created");
     });
 
-    socket.on("realm-joined", ({ realmCode, messages }) => {
+    socket.on("realm-joined", async ({ realmCode, messages }) => {
       setRealmCode(realmCode);
-      const decryptedMessages = messages.map((msg) => ({
-        ...msg,
-        content: decryptText(msg.content),
-      }));
+      const decryptedMessages = await Promise.all(
+        messages.map(async (msg) => ({
+          ...msg,
+          content: await decrypt(msg.content.encrypted, msg.content.iv, realmCode),
+        }))
+      );
       setMessages(decryptedMessages);
       setConnected(true);
       toast.success("Realm joined");
@@ -74,8 +82,12 @@ function App() {
 
     socket.on("user-joined", (userSize) => setUsersSize(userSize));
 
-    socket.on("new-message", (message) => {
-      message.content = decryptText(message.content);
+    socket.on("new-message", async (message) => {
+      message.content = await decrypt(
+        message.content.encrypted,
+        message.content.iv,
+        realmCodeRef.current
+      );
       setMessages((prev) => [...prev, message]);
     });
 
@@ -106,12 +118,13 @@ function App() {
     });
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!textMessage.trim()) return;
+    const {iv, encrypted} = await encrypt(textMessage.trim(), realmCode);
     socket.emit("send-message", {
       realmCode,
-      message: encryptText(textMessage.trim()),
+      message: {iv, encrypted},
       name,
     });
     setTextMessage("");

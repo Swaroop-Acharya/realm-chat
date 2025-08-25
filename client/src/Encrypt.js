@@ -1,27 +1,65 @@
-import CryptoJS from 'crypto-js';
+// Derive a 256-bit AES key from a password
+async function deriveKey(password, salt = "mysalt") {
+  const enc = new TextEncoder();
 
-// Secret key (keep this safe!)
-let SECRET_KEY = 'my_super_secret_key_123!';
+  // Import raw password
+  const baseKey = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
 
-// Function to set a new secret key
-export const setSecretKey = (newKey) => {
-  if (!newKey || newKey.length < 1) {
-    throw new Error('Secret key cannot be empty');
-  }
-  SECRET_KEY = newKey;
-};
+  // Derive AES-256-GCM key
+  return await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: enc.encode(salt),
+      iterations: 100_000,
+      hash: "SHA-256",
+    },
+    baseKey,
+    { name: "AES-GCM", length: 256 },
+    false, // not extractable
+    ["encrypt", "decrypt"]
+  );
+}
 
-// Encrypt function
-export const encryptText = (text) => {
-  // Encrypt
-  const ciphertext = CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
-  return ciphertext;
-};
+// Encrypt a message
+export async function encrypt(message, password) {
+  const key = await deriveKey(password);
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // AES-GCM IV
 
-// Decrypt function
-export const decryptText = (ciphertext) => {
-  // Decrypt
-  const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
-  const originalText = bytes.toString(CryptoJS.enc.Utf8);
-  return originalText;
-};
+  const enc = new TextEncoder();
+  const encryptedBuffer = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    enc.encode(message)
+  );
+
+  // Convert to hex for easy display
+  const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, "0")).join("");
+  const encryptedHex = Array.from(new Uint8Array(encryptedBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return { iv: ivHex, encrypted: encryptedHex };
+}
+
+// Decrypt a message
+export async function decrypt(encryptedHex, ivHex, password) {
+  const key = await deriveKey(password);
+
+  const encryptedBytes = new Uint8Array(encryptedHex.match(/.{2}/g).map(h => parseInt(h, 16)));
+  const iv = new Uint8Array(ivHex.match(/.{2}/g).map(h => parseInt(h, 16)));
+
+  const decryptedBuffer = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encryptedBytes
+  );
+
+  const dec = new TextDecoder();
+  return dec.decode(decryptedBuffer);
+}
