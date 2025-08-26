@@ -15,6 +15,9 @@ import { Copy, Loader2, Github } from "lucide-react";
 import { encrypt, decrypt } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
 import { ChatInput, ChatInputSubmit, ChatInputTextArea } from "@/components/ui/chat-input";
+import LegalModal from "@/components/LegalModal";
+import PrivacyPolicy from "@/components/PrivacyPolicy";
+import TermsAndConditions from "@/components/TermsAndConditions";
 
 /* client to server events
  *  create-realm
@@ -162,7 +165,10 @@ function App() {
       <div className={`container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex ${connected ? "flex-col overflow-hidden" : "flex-col"}`}>
         {!connected && (
           <nav className="w-full flex items-center justify-between py-2 sm:py-3">
-            <div className="text-lg sm:text-xl font-bold">Realm Chat</div>
+            <div className="flex items-center gap-2">
+              <div className="text-lg sm:text-xl font-bold">Realm Chat</div>
+              <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">OSS</span>
+            </div>
             <a
               href="https://github.com/Swaroop-Acharya/realm-chat"
               target="_blank"
@@ -170,7 +176,7 @@ function App() {
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
               <Github className="h-4 w-4" />
-              <span>Drop a star</span>
+              <span className="hidden sm:inline">GitHub</span>
             </a>
           </nav>
         )}
@@ -318,30 +324,17 @@ function App() {
               className="inline-flex items-center gap-2 hover:text-foreground"
             >
               <Github className="h-4 w-4" />
-              <span>Drop a star</span>
             </a>
           </footer>
         )}
 
         {(showPrivacy || showTerms) && !connected && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-lg bg-background border p-4 sm:p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">
-                  {showPrivacy ? "Privacy Policy" : "Terms & Conditions"}
-                </h2>
-                <Button variant="ghost" size="icon" onClick={() => { setShowPrivacy(false); setShowTerms(false); }}>
-                  ✕
-                </Button>
-              </div>
-              <div className="text-sm text-muted-foreground space-y-2 max-h-[60vh] overflow-y-auto">
-                <p>This is a demo modal. Add your {showPrivacy ? "privacy policy" : "terms"} content here.</p>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Button onClick={() => { setShowPrivacy(false); setShowTerms(false); }}>Close</Button>
-              </div>
-            </div>
-          </div>
+          <LegalModal
+            title={showPrivacy ? "Privacy Policy" : "Terms & Conditions"}
+            onClose={() => { setShowPrivacy(false); setShowTerms(false); }}
+          >
+            {showPrivacy ? <PrivacyPolicy /> : <TermsAndConditions />}
+          </LegalModal>
         )}
       </div>
     </>
