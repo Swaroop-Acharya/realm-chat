@@ -9,6 +9,25 @@ import React, { createContext, useContext } from "react";
 
 const ChatInputContext = createContext({});
 
+/**
+ * Context provider and container for chat input controls.
+ *
+ * Provides a shared context (value, onChange, onSubmit, loading, onStop, variant, rows)
+ * to descendant ChatInputTextArea and ChatInputSubmit components and renders a styled
+ * wrapper whose base layout depends on `variant`.
+ *
+ * @param {object} props
+ * @param {React.ReactNode} props.children - Child elements (typically ChatInputTextArea and ChatInputSubmit).
+ * @param {string} [props.className] - Additional CSS classes appended to the container.
+ * @param {"default"|"unstyled"} [props.variant="default"] - Visual variant: "default" applies the bordered, vertical layout; "unstyled" uses a horizontal gap layout.
+ * @param {string} [props.value] - Controlled input value surfaced to context consumers.
+ * @param {(next: string) => void} [props.onChange] - Change handler surfaced to context consumers.
+ * @param {() => void} [props.onSubmit] - Submit handler surfaced to context consumers; used by textarea Enter-to-submit and submit button.
+ * @param {boolean} [props.loading] - When true, consumers may render a loading/stop state (e.g., ChatInputSubmit shows a Stop button).
+ * @param {() => void} [props.onStop] - Handler invoked to stop a running submission; used when `loading` is true.
+ * @param {number} [props.rows=1] - Minimum number of textarea rows surfaced to context consumers.
+ * @returns {JSX.Element} The provider-wrapped container element.
+ */
 function ChatInput({
   children,
   className,
@@ -48,6 +67,25 @@ function ChatInput({
 
 ChatInput.displayName = "ChatInput";
 
+/**
+ * A textarea input for chat that auto-resizes and supports Enter-to-submit.
+ *
+ * Reads `value`, `onChange`, `onSubmit`, `rows`, and `variant` from props if provided,
+ * otherwise falls back to the ChatInput context. The `variant` prop maps the context
+ * "default" to this component's "unstyled" presentation.
+ *
+ * Behavior:
+ * - Automatically resizes to fit content via useTextareaResize.
+ * - Pressing Enter (without Shift) prevents the default newline and calls `onSubmit`
+ *   if an `onSubmit` handler is available and the current value is a non-empty string.
+ *
+ * @param {function} [onSubmit] - Handler invoked when Enter (without Shift) is pressed and input is non-empty.
+ * @param {string} [value] - Controlled value for the textarea.
+ * @param {function} [onChange] - Change handler for the textarea.
+ * @param {string} [className] - Additional CSS classes applied to the textarea.
+ * @param {"default"|"unstyled"} [variant] - Visual variant; when omitted, derived from context.
+ * @param {number} [rows] - Minimum number of rows for the textarea (defaults to 1).
+ */
 function ChatInputTextArea({
   onSubmit: onSubmitProp,
   value: valueProp,
@@ -95,6 +133,22 @@ function ChatInputTextArea({
 
 ChatInputTextArea.displayName = "ChatInputTextArea";
 
+/**
+ * Render a submit control for the chat input: a Stop button when loading (and `onStop` is supplied), otherwise a Send button that triggers submit.
+ *
+ * Reads fallback values from the surrounding ChatInputContext when props are not provided:
+ * - uses `loadingProp` or `context.loading`
+ * - uses `onStopProp` or `context.onStop`
+ * - uses `onSubmitProp` or `context.onSubmit`
+ * The Send button is disabled when the current context value is not a non-empty string.
+ *
+ * @param {Function} [onSubmitProp] - Optional submit handler override. Called when the Send button is clicked and input is not empty.
+ * @param {boolean} [loadingProp] - Optional loading override. When true and an `onStop` handler is available a Stop button is shown instead of Send.
+ * @param {Function} [onStopProp] - Optional stop handler override. Called when the Stop button is clicked.
+ * @param {string} [className] - Additional CSS class names applied to the rendered Button.
+ * @param {...any} [props] - Additional props forwarded to the underlying Button.
+ * @returns {JSX.Element} A Button element: either a Stop icon button or a Send icon button.
+ */
 function ChatInputSubmit({
   onSubmit: onSubmitProp,
   loading: loadingProp,
