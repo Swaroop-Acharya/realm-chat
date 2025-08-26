@@ -5,17 +5,16 @@ import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Copy, Loader2, Send } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 import { encrypt, decrypt } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
+import { ChatInput, ChatInputSubmit, ChatInputTextArea } from "@/components/ui/chat-input";
 
 /* client to server events
  *  create-realm
@@ -118,8 +117,7 @@ function App() {
     });
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleSendMessage = async () => {
     if (!textMessage.trim()) return;
     const {iv, encrypted} = await encrypt(textMessage.trim(), realmCode);
     socket.emit("send-message", {
@@ -140,15 +138,34 @@ function App() {
   };
   return (
     <>
-      <div className="container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex items-center justify-center">
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2 font-bold">
-              Realm Chat
-            </CardTitle>
-            <CardDescription className="text-sm sm:text-base">Chat with friends</CardDescription>
+      <div className={`container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex ${connected ? "flex-col overflow-hidden" : "items-center justify-center"}`}>
+        <Card className={`w-full ${connected ? "flex-1 flex flex-col min-h-0" : ""}`}>
+          <CardHeader className="space-y-1 shrink-0">
+            {!connected ? (
+              <>
+                <CardTitle className="text-xl sm:text-2xl flex items-center gap-2 font-bold">
+                  Realm Chat
+                </CardTitle>
+                <CardDescription className="text-sm sm:text-base">Chat with friends</CardDescription>
+              </>
+            ) : (
+              <div className="flex items-start justify-between">
+                <div className="flex flex-col">
+                  <span className="font-mono text-2xl sm:text-3xl font-extrabold">{realmCode}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{usersSize} users</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => copyToClipboard(realmCode)}
+                  className="h-6 w-6 sm:h-8 sm:w-8"
+                >
+                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
+            )}
           </CardHeader>
-          <CardContent>
+          <CardContent className={`${connected ? "flex-1 flex flex-col min-h-0" : ""}`}>
             {!connected ? (
               <div className="space-y-3 sm:space-y-4">
                 <Button
@@ -224,25 +241,8 @@ function App() {
                 )}
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto space-y-4 sm:space-y-7">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm text-muted-foreground bg-muted p-2 sm:p-3 rounded-lg gap-2 sm:gap-0">
-                  <div className="flex items-center gap-2">
-                    <span>
-                      Realm Code:{" "}
-                      <span className="font-mono font-bold">{realmCode}</span>
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => copyToClipboard(realmCode)}
-                      className="h-5 w-5 sm:h-6 sm:w-6"
-                    >
-                      <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                    </Button>
-                  </div>
-                  <span>Users: {usersSize}</span>
-                </div>
-                <div className="h-[300px] sm:h-[430px] overflow-y-auto border rounded-lg p-2 sm:p-4 space-y-2 chat-scrollbar">
+              <div className="relative flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 chat-scrollbar">
                   {messages.map((msg, i) => (
                     <MessageBubble
                       key={i}
@@ -254,19 +254,17 @@ function App() {
                   ))}
                   <div ref={currentMessgeRef}></div>
                 </div>
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Input
-                    type="text"
+                <div className="sticky bottom-0 mt-3 shrink-0">
+                  <ChatInput
+                    variant="default"
                     value={textMessage}
-                    name="messageText"
-                    className="text-base sm:text-lg py-3 sm:py-5"
-                    placeholder="Send message"
                     onChange={(e) => setTextMessage(e.target.value)}
-                  />
-                  <Button type="submit" size="lg" className="px-4 sm:px-8 py-3 sm:py-4">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
+                    onSubmit={handleSendMessage}
+                  >
+                    <ChatInputTextArea placeholder="Type a message..." rows={1} />
+                    <ChatInputSubmit />
+                  </ChatInput>
+                </div>
               </div>
             )}
           </CardContent>
