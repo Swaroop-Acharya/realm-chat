@@ -5,17 +5,16 @@ import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Copy, Loader2, Send } from "lucide-react";
+import { Copy, Loader2, Github } from "lucide-react";
 import { encrypt, decrypt } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
+import { ChatInput, ChatInputSubmit, ChatInputTextArea } from "@/components/ui/chat-input";
 
 /* client to server events
  *  create-realm
@@ -36,6 +35,25 @@ const LOCALHOST_SOCKET_URL = import.meta.env.VITE_LOCAL_SOCKET_URL;
 const PROD_SOCKET_URL = "https://realm-chat-backend.onrender.com";
 const socket = io(import.meta.env.DEV ? LOCALHOST_SOCKET_URL : PROD_SOCKET_URL);
 
+/**
+ * Realm-based chat React component that provides UI to create/join encrypted chat "realms" and exchange messages.
+ *
+ * Renders the full chat application: controls to create a new realm, join an existing realm, display participants,
+ * show an encrypted message stream, and send messages. Messages are encrypted before sending and decrypted on receipt
+ * using the realm code. The component:
+ * - Manages local UI state (name, realm code, connection state, message list, input text, modal visibility).
+ * - Establishes Socket.IO listeners for server events: "realm-created", "realm-joined", "user-joined", "new-message", and "error".
+ * - Emits socket events to create/join realms and to send encrypted messages.
+ * - Copies the current realm code to the clipboard.
+ * - Automatically scrolls the message list to the latest message and performs cleanup of socket listeners on unmount.
+ *
+ * Side effects:
+ * - Uses Socket.IO for network events and toast notifications for user feedback.
+ * - Calls `encrypt` before emitting outgoing messages and `decrypt` for incoming messages.
+ * - Writes to the system clipboard when copying the realm code.
+ *
+ * @returns {JSX.Element} The App component's rendered UI.
+ */
 function App() {
   const [realmCode, setRealmCode] = useState("");
   const [name, setName] = useState("");
@@ -46,6 +64,8 @@ function App() {
   const [isCreated, setIsCreated] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const [inputRealmCode, setInputRealmCode] = useState("");
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const currentMessgeRef = useRef(null);
   const realmCodeRef = useRef("");
 
@@ -118,8 +138,7 @@ function App() {
     });
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleSendMessage = async () => {
     if (!textMessage.trim()) return;
     const {iv, encrypted} = await encrypt(textMessage.trim(), realmCode);
     socket.emit("send-message", {
@@ -140,15 +159,44 @@ function App() {
   };
   return (
     <>
-      <div className="container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex items-center justify-center">
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2 font-bold">
-              Realm Chat
-            </CardTitle>
-            <CardDescription className="text-sm sm:text-base">Chat with friends</CardDescription>
+      <div className={`container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex ${connected ? "flex-col overflow-hidden" : "flex-col"}`}>
+        {!connected && (
+          <nav className="w-full flex items-center justify-between py-2 sm:py-3">
+            <div className="text-lg sm:text-xl font-bold">Realm Chat</div>
+            <a
+              href="https://github.com/Swaroop-Acharya/realm-chat"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <Github className="h-4 w-4" />
+              <span>Drop a star</span>
+            </a>
+          </nav>
+        )}
+        <div className={`${connected ? "flex-1 min-h-0 flex flex-col" : "flex-1 flex items-center justify-center"}`}>
+        <Card className={`w-full ${connected ? "flex-1 flex flex-col min-h-0" : ""}`}>
+          <CardHeader className="space-y-1 shrink-0">
+            {!connected ? (
+              <></>
+            ) : (
+              <div className="flex items-start justify-between">
+                <div className="flex flex-col">
+                  <span className="font-mono text-2xl sm:text-3xl font-extrabold">{realmCode}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{usersSize} users</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => copyToClipboard(realmCode)}
+                  className="h-6 w-6 sm:h-8 sm:w-8"
+                >
+                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
+            )}
           </CardHeader>
-          <CardContent>
+          <CardContent className={`${connected ? "flex-1 flex flex-col min-h-0" : ""}`}>
             {!connected ? (
               <div className="space-y-3 sm:space-y-4">
                 <Button
@@ -224,25 +272,8 @@ function App() {
                 )}
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto space-y-4 sm:space-y-7">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm text-muted-foreground bg-muted p-2 sm:p-3 rounded-lg gap-2 sm:gap-0">
-                  <div className="flex items-center gap-2">
-                    <span>
-                      Realm Code:{" "}
-                      <span className="font-mono font-bold">{realmCode}</span>
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => copyToClipboard(realmCode)}
-                      className="h-5 w-5 sm:h-6 sm:w-6"
-                    >
-                      <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                    </Button>
-                  </div>
-                  <span>Users: {usersSize}</span>
-                </div>
-                <div className="h-[300px] sm:h-[430px] overflow-y-auto border rounded-lg p-2 sm:p-4 space-y-2 chat-scrollbar">
+              <div className="relative flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 chat-scrollbar">
                   {messages.map((msg, i) => (
                     <MessageBubble
                       key={i}
@@ -254,23 +285,64 @@ function App() {
                   ))}
                   <div ref={currentMessgeRef}></div>
                 </div>
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Input
-                    type="text"
+                <div className="sticky bottom-0 mt-3 shrink-0">
+                  <ChatInput
+                    variant="default"
                     value={textMessage}
-                    name="messageText"
-                    className="text-base sm:text-lg py-3 sm:py-5"
-                    placeholder="Send message"
                     onChange={(e) => setTextMessage(e.target.value)}
-                  />
-                  <Button type="submit" size="lg" className="px-4 sm:px-8 py-3 sm:py-4">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
+                    onSubmit={handleSendMessage}
+                  >
+                    <ChatInputTextArea placeholder="Type a message..." rows={1} />
+                    <ChatInputSubmit />
+                  </ChatInput>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
+        </div>
+        {!connected && (
+          <footer className="mt-3 sm:mt-4 flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setShowPrivacy(true)} className="hover:underline">
+                Privacy Policy
+              </button>
+              <button onClick={() => setShowTerms(true)} className="hover:underline">
+                Terms & Conditions
+              </button>
+            </div>
+            <a
+              href="https://github.com/Swaroop-Acharya/realm-chat"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 hover:text-foreground"
+            >
+              <Github className="h-4 w-4" />
+              <span>Drop a star</span>
+            </a>
+          </footer>
+        )}
+
+        {(showPrivacy || showTerms) && !connected && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-lg bg-background border p-4 sm:p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold">
+                  {showPrivacy ? "Privacy Policy" : "Terms & Conditions"}
+                </h2>
+                <Button variant="ghost" size="icon" onClick={() => { setShowPrivacy(false); setShowTerms(false); }}>
+                  ✕
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-2 max-h-[60vh] overflow-y-auto">
+                <p>This is a demo modal. Add your {showPrivacy ? "privacy policy" : "terms"} content here.</p>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button onClick={() => { setShowPrivacy(false); setShowTerms(false); }}>Close</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
