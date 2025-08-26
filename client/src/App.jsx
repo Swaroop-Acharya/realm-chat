@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Copy, Loader2 } from "lucide-react";
+import { Copy, Loader2, Github } from "lucide-react";
 import { encrypt, decrypt } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
 import { ChatInput, ChatInputSubmit, ChatInputTextArea } from "@/components/ui/chat-input";
@@ -45,6 +45,8 @@ function App() {
   const [isCreated, setIsCreated] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const [inputRealmCode, setInputRealmCode] = useState("");
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const currentMessgeRef = useRef(null);
   const realmCodeRef = useRef("");
 
@@ -138,16 +140,26 @@ function App() {
   };
   return (
     <>
-      <div className={`container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex ${connected ? "flex-col overflow-hidden" : "items-center justify-center"}`}>
+      <div className={`container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex ${connected ? "flex-col overflow-hidden" : "flex-col"}`}>
+        {!connected && (
+          <nav className="w-full flex items-center justify-between py-2 sm:py-3">
+            <div className="text-lg sm:text-xl font-bold">Realm Chat</div>
+            <a
+              href="https://github.com/Swaroop-Acharya/realm-chat"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <Github className="h-4 w-4" />
+              <span>Drop a star</span>
+            </a>
+          </nav>
+        )}
+        <div className={`${connected ? "flex-1 min-h-0 flex flex-col" : "flex-1 flex items-center justify-center"}`}>
         <Card className={`w-full ${connected ? "flex-1 flex flex-col min-h-0" : ""}`}>
           <CardHeader className="space-y-1 shrink-0">
             {!connected ? (
-              <>
-                <CardTitle className="text-xl sm:text-2xl flex items-center gap-2 font-bold">
-                  Realm Chat
-                </CardTitle>
-                <CardDescription className="text-sm sm:text-base">Chat with friends</CardDescription>
-              </>
+              <></>
             ) : (
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
@@ -269,6 +281,49 @@ function App() {
             )}
           </CardContent>
         </Card>
+        </div>
+        {!connected && (
+          <footer className="mt-3 sm:mt-4 flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setShowPrivacy(true)} className="hover:underline">
+                Privacy Policy
+              </button>
+              <button onClick={() => setShowTerms(true)} className="hover:underline">
+                Terms & Conditions
+              </button>
+            </div>
+            <a
+              href="https://github.com/Swaroop-Acharya/realm-chat"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 hover:text-foreground"
+            >
+              <Github className="h-4 w-4" />
+              <span>Drop a star</span>
+            </a>
+          </footer>
+        )}
+
+        {(showPrivacy || showTerms) && !connected && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-lg bg-background border p-4 sm:p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold">
+                  {showPrivacy ? "Privacy Policy" : "Terms & Conditions"}
+                </h2>
+                <Button variant="ghost" size="icon" onClick={() => { setShowPrivacy(false); setShowTerms(false); }}>
+                  ✕
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-2 max-h-[60vh] overflow-y-auto">
+                <p>This is a demo modal. Add your {showPrivacy ? "privacy policy" : "terms"} content here.</p>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button onClick={() => { setShowPrivacy(false); setShowTerms(false); }}>Close</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
