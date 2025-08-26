@@ -1,3 +1,14 @@
+/**
+ * Render a chat message bubble aligned and styled for the message sender.
+ *
+ * Shows the sender label (only when not `isOwn`), the message `content` (preserving whitespace and allowing long-word wrapping), and a right-aligned timestamp formatted as `HH:MM` using `new Date(timeStamp)`. Visual appearance (alignment, background/text color, and corner radii) changes when `isOwn` is true to indicate an outgoing message.
+ *
+ * @param {string} sender - Display name of the message sender; rendered above the content when `isOwn` is false.
+ * @param {string} content - Message text; whitespace is preserved and long words will wrap.
+ * @param {*} timeStamp - Any value accepted by `new Date()`; used to render the time via `toLocaleTimeString` with two-digit hour and minute.
+ * @param {boolean} isOwn - If true, aligns bubble to the right and applies outgoing styling; otherwise aligns left and renders the sender label.
+ * @returns {JSX.Element} The rendered message bubble element.
+ */
 function MessageBubble({ sender, content, timeStamp, isOwn }) {
   return (
     <div

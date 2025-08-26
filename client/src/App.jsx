@@ -35,6 +35,25 @@ const LOCALHOST_SOCKET_URL = import.meta.env.VITE_LOCAL_SOCKET_URL;
 const PROD_SOCKET_URL = "https://realm-chat-backend.onrender.com";
 const socket = io(import.meta.env.DEV ? LOCALHOST_SOCKET_URL : PROD_SOCKET_URL);
 
+/**
+ * Realm-based chat React component that provides UI to create/join encrypted chat "realms" and exchange messages.
+ *
+ * Renders the full chat application: controls to create a new realm, join an existing realm, display participants,
+ * show an encrypted message stream, and send messages. Messages are encrypted before sending and decrypted on receipt
+ * using the realm code. The component:
+ * - Manages local UI state (name, realm code, connection state, message list, input text, modal visibility).
+ * - Establishes Socket.IO listeners for server events: "realm-created", "realm-joined", "user-joined", "new-message", and "error".
+ * - Emits socket events to create/join realms and to send encrypted messages.
+ * - Copies the current realm code to the clipboard.
+ * - Automatically scrolls the message list to the latest message and performs cleanup of socket listeners on unmount.
+ *
+ * Side effects:
+ * - Uses Socket.IO for network events and toast notifications for user feedback.
+ * - Calls `encrypt` before emitting outgoing messages and `decrypt` for incoming messages.
+ * - Writes to the system clipboard when copying the realm code.
+ *
+ * @returns {JSX.Element} The App component's rendered UI.
+ */
 function App() {
   const [realmCode, setRealmCode] = useState("");
   const [name, setName] = useState("");
