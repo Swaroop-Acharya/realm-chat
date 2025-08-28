@@ -6,9 +6,7 @@ import { Input } from "./components/ui/input";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Copy, Loader2, Github, LogOut } from "lucide-react";
@@ -105,6 +103,8 @@ function App() {
       toast.success("Realm joined");
     });
 
+    socket.on("user-left", (userSize) => setUsersSize(userSize));
+
     socket.on("error", (err) => {
       setIsCreated(false);
       setIsJoined(false);
@@ -158,6 +158,15 @@ function App() {
       name,
     });
     setTextMessage("");
+  };
+
+  const handleLeaveRealm = () => {
+    socket.disconnect();
+    setInputRealmCode("");
+    setRealmCode("");
+    setIsJoined(false);
+    setIsCreated(false);
+    setConnected(false);
   };
 
   const copyToClipboard = async () => {
@@ -222,7 +231,10 @@ function App() {
                         {usersSize} users
                       </span>
                     </div>
-                    <Button className="bg-red-500 p-3 rounded">
+                    <Button
+                      onClick={handleLeaveRealm}
+                      className="bg-red-500 p-3 rounded"
+                    >
                       <LogOut className="w-6 h-6 text-white" />
                     </Button>
                   </div>
