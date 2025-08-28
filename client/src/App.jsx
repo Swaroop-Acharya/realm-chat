@@ -159,13 +159,18 @@ function App() {
 
   const handleSendMessage = async () => {
     if (!textMessage.trim()) return;
-    const { iv, encrypted } = await encrypt(textMessage.trim(), realmCode);
-    socket.emit("send-message", {
-      realmCode,
-      message: { iv, encrypted },
-      name,
-    });
-    setTextMessage("");
+    try {
+      const { iv, encrypted } = await encrypt(textMessage.trim(), realmCode);
+      socket.emit("send-message", {
+        realmCode,
+        message: { iv, encrypted },
+        name,
+      });
+      setTextMessage("");
+    } catch (e) {
+      toast.error("Faild to encrypt or send message");
+      console.error(e);
+    }
   };
 
   const handleLeaveRealm = () => {
