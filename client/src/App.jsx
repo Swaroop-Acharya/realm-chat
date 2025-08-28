@@ -3,11 +3,7 @@ import "./App.css";
 import { io } from "socket.io-client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Copy, Loader2, Github, LogOut } from "lucide-react";
 import { encrypt, decrypt } from "./Encrypt";
@@ -88,21 +84,27 @@ function App() {
 
     socket.on("realm-joined", async ({ realmCode, messages }) => {
       setRealmCode(realmCode);
+
       const decryptedMessages = await Promise.all(
-        messages.map(async (msg) => ({
-          ...msg,
-          content: await decrypt(
-            msg.content.encrypted,
-            msg.content.iv,
-            realmCode,
-          ),
-        })),
+        messages.map(async (msg) => {
+          try {
+            const content = await decrypt(
+              msg.content.encrypted,
+              msg.content.iv,
+              realmCode,
+            );
+            return { ...msg, content };
+          } catch (e) {
+            console.error("Failed to decrypt historical message", e);
+            return { ...msg, content: "[Failed to decrypt]" };
+          }
+        }),
       );
+
       setMessages(decryptedMessages);
       setConnected(true);
       toast.success("Realm joined");
     });
-
     socket.on("user-left", (userSize) => setUsersSize(userSize));
 
     socket.on("error", (err) => {
@@ -114,17 +116,23 @@ function App() {
     socket.on("user-joined", (userSize) => setUsersSize(userSize));
 
     socket.on("new-message", async (message) => {
-      message.content = await decrypt(
-        message.content.encrypted,
-        message.content.iv,
-        realmCodeRef.current,
-      );
-      setMessages((prev) => [...prev, message]);
+      try {
+        message.content = await decrypt(
+          message.content.encrypted,
+          message.content.iv,
+          realmCodeRef.current,
+        );
+        setMessages((prev) => [...prev, message]);
+      } catch (e) {
+        console.error("Failed to decrypt incoming message", e);
+        message.content = "[Failed to decrypt]";
+      }
     });
 
     return () => {
       socket.off("realm-created");
-      socket.off("joined-realm");
+      socket.off("realm-joined");
+      socket.off("user-left");
       socket.off("error");
       socket.off("user-joined");
       socket.off("new-message");
@@ -162,6 +170,9 @@ function App() {
 
   const handleLeaveRealm = () => {
     socket.disconnect();
+    socket.connect();
+    setMessages([]);
+    setUsersSize(0);
     setInputRealmCode("");
     setRealmCode("");
     setIsJoined(false);
@@ -238,7 +249,7 @@ function App() {
                       <LogOut className="w-6 h-6 text-white" />
                     </Button>
                   </div>
-                  <span className="block border-b-1 "></span>
+                  <span className="block border-b"></span>
                 </>
               )}
             </CardHeader>
