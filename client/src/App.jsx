@@ -3,18 +3,16 @@ import "./App.css";
 import { io } from "socket.io-client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Copy, Loader2, Github } from "lucide-react";
+import { Copy, Loader2, Github, LogOut } from "lucide-react";
 import { encrypt, decrypt } from "./Encrypt";
 import MessageBubble from "./components/MessageBubble";
-import { ChatInput, ChatInputSubmit, ChatInputTextArea } from "@/components/ui/chat-input";
+import {
+  ChatInput,
+  ChatInputSubmit,
+  ChatInputTextArea,
+} from "@/components/ui/chat-input";
 import LegalModal from "@/components/LegalModal";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
 import TermsAndConditions from "@/components/TermsAndConditions";
@@ -86,16 +84,28 @@ function App() {
 
     socket.on("realm-joined", async ({ realmCode, messages }) => {
       setRealmCode(realmCode);
+
       const decryptedMessages = await Promise.all(
-        messages.map(async (msg) => ({
-          ...msg,
-          content: await decrypt(msg.content.encrypted, msg.content.iv, realmCode),
-        }))
+        messages.map(async (msg) => {
+          try {
+            const content = await decrypt(
+              msg.content.encrypted,
+              msg.content.iv,
+              realmCode,
+            );
+            return { ...msg, content };
+          } catch (e) {
+            console.error("Failed to decrypt historical message", e);
+            return { ...msg, content: "[Failed to decrypt]" };
+          }
+        }),
       );
+
       setMessages(decryptedMessages);
       setConnected(true);
       toast.success("Realm joined");
     });
+    socket.on("user-left", (userSize) => setUsersSize(userSize));
 
     socket.on("error", (err) => {
       setIsCreated(false);
@@ -106,17 +116,23 @@ function App() {
     socket.on("user-joined", (userSize) => setUsersSize(userSize));
 
     socket.on("new-message", async (message) => {
-      message.content = await decrypt(
-        message.content.encrypted,
-        message.content.iv,
-        realmCodeRef.current
-      );
-      setMessages((prev) => [...prev, message]);
+      try {
+        message.content = await decrypt(
+          message.content.encrypted,
+          message.content.iv,
+          realmCodeRef.current,
+        );
+        setMessages((prev) => [...prev, message]);
+      } catch (e) {
+        console.error("Failed to decrypt incoming message", e);
+        message.content = "[Failed to decrypt]";
+      }
     });
 
     return () => {
       socket.off("realm-created");
-      socket.off("joined-realm");
+      socket.off("realm-joined");
+      socket.off("user-left");
       socket.off("error");
       socket.off("user-joined");
       socket.off("new-message");
@@ -143,13 +159,30 @@ function App() {
 
   const handleSendMessage = async () => {
     if (!textMessage.trim()) return;
-    const {iv, encrypted} = await encrypt(textMessage.trim(), realmCode);
-    socket.emit("send-message", {
-      realmCode,
-      message: {iv, encrypted},
-      name,
-    });
-    setTextMessage("");
+    try {
+      const { iv, encrypted } = await encrypt(textMessage.trim(), realmCode);
+      socket.emit("send-message", {
+        realmCode,
+        message: { iv, encrypted },
+        name,
+      });
+      setTextMessage("");
+    } catch (e) {
+      toast.error("Faild to encrypt or send message");
+      console.error(e);
+    }
+  };
+
+  const handleLeaveRealm = () => {
+    socket.disconnect();
+    socket.connect();
+    setMessages([]);
+    setUsersSize(0);
+    setInputRealmCode("");
+    setRealmCode("");
+    setIsJoined(false);
+    setIsCreated(false);
+    setConnected(false);
   };
 
   const copyToClipboard = async () => {
@@ -162,12 +195,16 @@ function App() {
   };
   return (
     <>
-      <div className={`container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex ${connected ? "flex-col overflow-hidden" : "flex-col"}`}>
+      <div
+        className={`container mx-auto max-w-2xl p-2 sm:p-4 h-screen flex ${connected ? "flex-col overflow-hidden" : "flex-col"}`}
+      >
         {!connected && (
           <nav className="w-full flex items-center justify-between py-2 sm:py-3">
             <div className="flex items-center gap-2">
               <div className="text-lg sm:text-xl font-bold">Realm Chat</div>
-              <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">OSS</span>
+              <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                OSS
+              </span>
             </div>
             <a
               href="https://github.com/Swaroop-Acharya/realm-chat"
@@ -180,140 +217,170 @@ function App() {
             </a>
           </nav>
         )}
-        <div className={`${connected ? "flex-1 min-h-0 flex flex-col" : "flex-1 flex items-center justify-center"}`}>
-        <Card className={`w-full ${connected ? "flex-1 flex flex-col min-h-0" : ""}`}>
-          <CardHeader className="space-y-1 shrink-0">
-            {!connected ? (
-              <></>
-            ) : (
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col">
-                  <span className="font-mono text-2xl sm:text-3xl font-extrabold">{realmCode}</span>
-                  <span className="text-xs sm:text-sm text-muted-foreground">{usersSize} users</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => copyToClipboard(realmCode)}
-                  className="h-6 w-6 sm:h-8 sm:w-8"
-                >
-                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
-                </Button>
-              </div>
-            )}
-          </CardHeader>
-          <CardContent className={`${connected ? "flex-1 flex flex-col min-h-0" : ""}`}>
-            {!connected ? (
-              <div className="space-y-3 sm:space-y-4">
-                <Button
-                  size="lg"
-                  className="w-full text-base sm:text-lg py-4 sm:py-6"
-                  onClick={handleCreateRealm}
-                  disabled={isCreated}
-                >
-                  {isCreated ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Realm...
-                    </>
-                  ) : (
-                    "Create New Realm"
-                  )}
-                </Button>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    name="name"
-                    value={name}
-                    placeholder="Name"
-                    className="text-base sm:text-lg py-3 sm:py-5"
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Input
-                    type="text"
-                    name="RealmCode"
-                    value={inputRealmCode}
-                    placeholder="Enter Realm Code"
-                    className="text-base sm:text-lg py-3 sm:py-5"
-                    onChange={(e) => setInputRealmCode(e.target.value)}
-                  />
+        <div
+          className={`${connected ? "flex-1 min-h-0 flex flex-col" : "flex-1 flex items-center justify-center"}`}
+        >
+          <Card
+            className={`w-full ${connected ? "flex-1 flex flex-col min-h-0" : ""}`}
+          >
+            <CardHeader className="space-y-1 shrink-0">
+              {!connected ? (
+                <></>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col">
+                      <div className="flex items-center justify-center">
+                        <span className="block font-mono text-2xl sm:text-3xl font-extrabold">
+                          {realmCode}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copyToClipboard(realmCode)}
+                          className="h-6 w-6 sm:h-8 sm:w-8"
+                        >
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                      </div>
+                      <span className="block text-xs sm:text-sm text-muted-foreground">
+                        {usersSize} users
+                      </span>
+                    </div>
+                    <Button
+                      onClick={handleLeaveRealm}
+                      className="bg-red-500 p-3 rounded"
+                    >
+                      <LogOut className="w-6 h-6 text-white" />
+                    </Button>
+                  </div>
+                  <span className="block border-b"></span>
+                </>
+              )}
+            </CardHeader>
+            <CardContent
+              className={`${connected ? "flex-1 flex flex-col min-h-0" : ""}`}
+            >
+              {!connected ? (
+                <div className="space-y-3 sm:space-y-4">
                   <Button
                     size="lg"
-                    disabled={isJoined}
-                    className="px-4 sm:px-8 py-3 sm:py-4"
-                    onClick={handleJoinRealm}
+                    className="w-full text-base sm:text-lg py-4 sm:py-6"
+                    onClick={handleCreateRealm}
+                    disabled={isCreated}
                   >
-                    {isJoined ? (
+                    {isCreated ? (
                       <>
-                        <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                        Joining Realm...
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating Realm...
                       </>
                     ) : (
-                      "Join Realm"
+                      "Create New Realm"
                     )}
                   </Button>
-                </div>
-
-                {realmCode && (
-                  <div className="text-center p-4 sm:p-6 bg-muted rounded-lg">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">
-                      Share this code with your friend
-                    </p>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="font-mono text-xl sm:text-2xl font-bold">
-                        {realmCode}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => copyToClipboard(realmCode)}
-                        className="h-6 w-6 sm:h-8 sm:w-8"
-                      >
-                        <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="relative flex-1 flex flex-col min-h-0">
-                <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 chat-scrollbar">
-                  {messages.map((msg, i) => (
-                    <MessageBubble
-                      key={i}
-                      sender={msg.sender}
-                      content={msg.content}
-                      timeStamp={msg.timeStamp}
-                      isOwn={msg.sender === name}
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      name="name"
+                      value={name}
+                      placeholder="Name"
+                      className="text-base sm:text-lg py-3 sm:py-5"
+                      onChange={(e) => setName(e.target.value)}
                     />
-                  ))}
-                  <div ref={currentMessgeRef}></div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      type="text"
+                      name="RealmCode"
+                      value={inputRealmCode}
+                      placeholder="Enter Realm Code"
+                      className="text-base sm:text-lg py-3 sm:py-5"
+                      onChange={(e) => setInputRealmCode(e.target.value)}
+                    />
+                    <Button
+                      size="lg"
+                      disabled={isJoined}
+                      className="px-4 sm:px-8 py-3 sm:py-4"
+                      onClick={handleJoinRealm}
+                    >
+                      {isJoined ? (
+                        <>
+                          <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                          Joining Realm...
+                        </>
+                      ) : (
+                        "Join Realm"
+                      )}
+                    </Button>
+                  </div>
+
+                  {realmCode && (
+                    <div className="text-center p-4 sm:p-6 bg-muted rounded-lg">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                        Share this code with your friend
+                      </p>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-mono text-xl sm:text-2xl font-bold">
+                          {realmCode}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copyToClipboard(realmCode)}
+                          className="h-6 w-6 sm:h-8 sm:w-8"
+                        >
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="sticky bottom-0 mt-3 shrink-0">
-                  <ChatInput
-                    variant="default"
-                    value={textMessage}
-                    onChange={(e) => setTextMessage(e.target.value)}
-                    onSubmit={handleSendMessage}
-                  >
-                    <ChatInputTextArea placeholder="Type a message..." rows={1} />
-                    <ChatInputSubmit />
-                  </ChatInput>
+              ) : (
+                <div className="relative flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 chat-scrollbar">
+                    {messages.map((msg, i) => (
+                      <MessageBubble
+                        key={i}
+                        sender={msg.sender}
+                        content={msg.content}
+                        timeStamp={msg.timeStamp}
+                        isOwn={msg.sender === name}
+                      />
+                    ))}
+                    <div ref={currentMessgeRef}></div>
+                  </div>
+                  <div className="sticky bottom-0 mt-3 shrink-0">
+                    <ChatInput
+                      variant="default"
+                      value={textMessage}
+                      onChange={(e) => setTextMessage(e.target.value)}
+                      onSubmit={handleSendMessage}
+                    >
+                      <ChatInputTextArea
+                        placeholder="Type a message..."
+                        rows={1}
+                      />
+                      <ChatInputSubmit />
+                    </ChatInput>
+                  </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
         </div>
         {!connected && (
           <footer className="mt-3 sm:mt-4 flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-4">
-              <button onClick={() => setShowPrivacy(true)} className="hover:underline">
+              <button
+                onClick={() => setShowPrivacy(true)}
+                className="hover:underline"
+              >
                 Privacy Policy
               </button>
-              <button onClick={() => setShowTerms(true)} className="hover:underline">
+              <button
+                onClick={() => setShowTerms(true)}
+                className="hover:underline"
+              >
                 Terms & Conditions
               </button>
             </div>
@@ -331,7 +398,10 @@ function App() {
         {(showPrivacy || showTerms) && !connected && (
           <LegalModal
             title={showPrivacy ? "Privacy Policy" : "Terms & Conditions"}
-            onClose={() => { setShowPrivacy(false); setShowTerms(false); }}
+            onClose={() => {
+              setShowPrivacy(false);
+              setShowTerms(false);
+            }}
           >
             {showPrivacy ? <PrivacyPolicy /> : <TermsAndConditions />}
           </LegalModal>
