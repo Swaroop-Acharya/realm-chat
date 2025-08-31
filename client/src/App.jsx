@@ -16,6 +16,7 @@ import {
 import LegalModal from "@/components/LegalModal";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
 import TermsAndConditions from "@/components/TermsAndConditions";
+import ThemeToggle from "@/components/ThemeToggle";
 
 /* client to server events
  *  create-realm
@@ -205,16 +206,21 @@ function App() {
               <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                 OSS
               </span>
+
             </div>
-            <a
-              href="https://github.com/Swaroop-Acharya/realm-chat"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <Github className="h-4 w-4" />
-              <span className="hidden sm:inline">GitHub</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <a
+                href="https://github.com/Swaroop-Acharya/realm-chat"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <Github className="h-4 w-4" />
+                <span className="hidden sm:inline">GitHub</span>
+              </a>
+
+            </div>
           </nav>
         )}
         <div
@@ -384,14 +390,17 @@ function App() {
                 Terms & Conditions
               </button>
             </div>
-            <a
-              href="https://github.com/Swaroop-Acharya/realm-chat"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 hover:text-foreground"
-            >
-              <Github className="h-4 w-4" />
-            </a>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <a
+                href="https://github.com/Swaroop-Acharya/realm-chat"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 hover:text-foreground"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+            </div>
           </footer>
         )}
 
