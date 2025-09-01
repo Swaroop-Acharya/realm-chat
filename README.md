@@ -172,32 +172,6 @@
 - **Build Tool**: Vite with React plugin
 - **Styling**: Tailwind CSS with custom component library
 
-## 📱 UI Components
-
-### Core Components
-- **MessageBubble** - Individual message display
-- **ChatInput** - Message input with auto-resize
-- **LegalModal** - Privacy policy and terms display
-- **Button/Input/Card** - Reusable UI components
-
-### Design System
-- **Tailwind CSS** - Utility-first styling
-- **Radix UI** - Accessible component primitives
-- **Responsive Design** - Mobile-first approach
-- **Theme Support** - Dark/light mode switching
-
-## 🚀 Deployment
-
-### Frontend Deployment
-- **Vercel** - Optimized for React applications
-- **Netlify** - Alternative deployment platform
-- **Static Hosting** - Any static file hosting service
-
-### Backend Deployment
-- **Render** - Cloud platform for Node.js apps
-- **Heroku** - Alternative cloud platform
-- **VPS** - Self-hosted deployment option
-
 ### Environment Variables
 ```env
 # Production
@@ -224,13 +198,6 @@ npm run lint     # Run ESLint
 npm start        # Start production server
 npm run dev      # Start development server with nodemon
 ```
-
-### Code Quality
-- **ESLint** - JavaScript/React linting
-- **Prettier** - Code formatting (via ESLint)
-- **TypeScript** - Type checking support
-- **Component Structure** - Consistent component organization
-
 ## 🤝 Contributing
 
 We welcome contributions to Realm Chat! Here's how you can help:
@@ -253,15 +220,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Copyright (c) 2024 Swaroop Acharya**
 
-## 🙏 Acknowledgments
-
-- **Socket.IO** - Real-time communication
-- **React Team** - Amazing frontend framework
-- **Tailwind CSS** - Utility-first CSS framework
-- **Radix UI** - Accessible component primitives
-- **Open Source Community** - For inspiration and tools
-
-## 📞 Support
+## Support
 
 - **Issues**: [GitHub Issues](https://github.com/your-username/realm-chat/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-username/realm-chat/discussions)
