@@ -222,6 +222,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**⚡ Build your own encrypted realms and chat securely!**
+
 
 *Made with ❤️ by Swaroop Acharya*
